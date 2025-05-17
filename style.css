@@ -1,0 +1,105 @@
+/* Base Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f6fa;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  padding: 30px;
+}
+
+/* Navigation */
+.nav-tabs {
+  border-bottom: 2px solid #3498db;
+  margin-bottom: 25px;
+}
+
+.tab-link {
+  background: none;
+  border: none;
+  padding: 12px 25px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #7f8c8d;
+  transition: all 0.3s;
+}
+
+.tab-link.active {
+  color: #3498db;
+  border-bottom: 3px solid #3498db;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+button {
+  background: #3498db;
+  color: white;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #2980b9;
+}
+
+/* Result Section */
+#resultContainer {
+  margin-top: 30px;
+  padding: 25px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+#radarChart {
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.pdf-btn {
+  background: #27ae60;
+  margin-top: 15px;
+}
+
+/* History Section */
+#historyList {
+  margin-top: 20px;
+}
+
+.history-item {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

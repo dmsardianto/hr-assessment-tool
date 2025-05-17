@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Assessment Tool</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+      <button class="tab-link active" onclick="showTab('assessment')">Assessment Baru</button>
+      <button class="tab-link" onclick="showTab('history')">Riwayat</button>
+    </nav>
+
+    <!-- Tab Assessment -->
+    <div id="assessment" class="tab-content active">
+      <h1>Penilaian Kandidat</h1>
+      
+      <!-- Form Input -->
+      <form id="assessmentForm">
+        <div class="form-group">
+          <label for="interviewDate">Tanggal Interview:</label>
+          <input type="date" id="interviewDate" required>
+        </div>
+
+        <div class="form-group">
+          <label for="interviewerName">Nama Interviewer:</label>
+          <input type="text" id="interviewerName" required>
+        </div>
+
+        <div class="form-group">
+          <label for="interviewerRole">Role:</label>
+          <select id="interviewerRole" required>
+            <option value="">Pilih Role</option>
+            <option value="HR">HR</option>
+            <option value="User">User</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="candidateName">Nama Kandidat:</label>
+          <input type="text" id="candidateName" required>
+        </div>
+
+        <div class="form-group">
+          <label for="candidateLevel">Level:</label>
+          <select id="candidateLevel" required>
+            <option value="">Pilih Level</option>
+            <option value="Freshgraduate">Freshgraduate</option>
+            <option value="Experience">Experience</option>
+            <option value="KeyPerson">Key Person/Leader</option>
+          </select>
+        </div>
+
+        <div id="scoreSection"></div>
+
+        <button type="submit">Simpan & Generate PDF</button>
+      </form>
+
+      <!-- Hasil Assessment -->
+      <div id="resultContainer" class="hidden">
+        <div class="result-header">
+          <h2>Hasil Assessment</h2>
+          <canvas id="radarChart"></canvas>
+        </div>
+        <div class="result-details">
+          <p>Skor Akhir: <span id="finalScore">0</span></p>
+          <p>Status: <span id="resultStatus"></span></p>
+          <button onclick="exportToPDF()" class="pdf-btn">Download PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Riwayat -->
+    <div id="history" class="tab-content">
+      <h2>Riwayat Assessment</h2>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
