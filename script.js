@@ -134,7 +134,7 @@ async function handleSubmit(e) {
   
   try {
     const response = await fetch(scriptURL, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
