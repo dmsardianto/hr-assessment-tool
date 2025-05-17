@@ -1,5 +1,5 @@
 // Konfigurasi
-const scriptURL = 'https://script.google.com/macros/s/AKfycbyDODIVqsSydcheGwXeTDaXaBwEI0M-L9kv0qYHehawnUMS-VH8O7JhWErpB_7XgTNz/exec?redirect=please';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwC3bnRj7PUZtvj0fLSW5PD_6oTj9bsFKX2eXeE09lA3d5Q0Yurv7ypXy7x19gcH2Tr/exec';
 
 const weights = {
   HR: {
@@ -134,7 +134,7 @@ async function handleSubmit(e) {
   
   try {
     const response = await fetch(scriptURL, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -161,22 +161,20 @@ async function handleSubmit(e) {
   }
 }
 
+// Ubah metode POST menjadi GET dengan parameter URL
 async function submitToGoogleSheets(data) {
-  const response = await fetch(scriptURL, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
+  const params = new URLSearchParams(data).toString();
+  const urlWithParams = `${scriptURL}?${params}`;
   
-  const result = await response.json();
-  console.log('Google Sheets Response:', result);
-  
-  if(result.status === "success") {
-    alert('Data berhasil disimpan ke Google Sheet!');
-  } else {
-    throw new Error(result.message);
+  try {
+    const response = await fetch(urlWithParams, {
+      method: 'GET', // Ganti ke GET
+      mode: 'no-cors'
+    });
+    
+    console.log('Data terkirim ke Google Sheet');
+  } catch (error) {
+    console.error('Error:', error);
   }
 }
 
