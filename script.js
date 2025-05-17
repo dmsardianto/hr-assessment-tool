@@ -1,5 +1,5 @@
 // Konfigurasi
-const scriptURL = 'https://script.google.com/macros/s/AKfycbwx7i8gUU1Tu8hQHmQSzdn6Wp89qroVkoZsKHjU4zIhOiaqj4_gMP1RIXMTxq3m0DsR/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbyDODIVqsSydcheGwXeTDaXaBwEI0M-L9kv0qYHehawnUMS-VH8O7JhWErpB_7XgTNz/exec';
 
 const weights = {
   HR: {
@@ -133,23 +133,31 @@ async function handleSubmit(e) {
   showResult();
   
   try {
-    // Kirim ke Google Sheets
-    await submitToGoogleSheets({
-      tanggal: assessment.date,
-      interviewer: assessment.interviewer,
-      role: assessment.role,
-      kandidat: assessment.candidate,
-      level: assessment.level,
-      total: currentAssessment.total,
-      status: currentAssessment.status
+    const response = await fetch(scriptURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tanggal: currentAssessment.date,
+        interviewer: currentAssessment.interviewer,
+        role: currentAssessment.role,
+        kandidat: currentAssessment.candidate,
+        level: currentAssessment.level,
+        total: currentAssessment.total,
+        status: currentAssessment.status
+      })
     });
+
+    if (!response.ok) throw new Error('Gagal menyimpan data');
     
-    // Simpan ke riwayat
-    saveToHistory();
+    const result = await response.json();
+    console.log('Sukses:', result);
+    alert('Data tersimpan!');
     
   } catch (error) {
     console.error('Error:', error);
-    alert('Gagal menyimpan data: ' + error.message);
+    alert(`Error: ${error.message}`);
   }
 }
 
@@ -232,6 +240,35 @@ function renderChart() {
   });
 }
 
+function exportToPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Header
+  doc.setFontSize(18);
+  doc.text("Hasil Assessment Kandidat", 105, 20, { align: 'center' });
+
+  // Data Kandidat
+  doc.setFontSize(12);
+  doc.text(`Nama Kandidat: ${currentAssessment.candidate}`, 20, 30);
+  doc.text(`Level: ${currentAssessment.level}`, 20, 36);
+  doc.text(`Interviewer: ${currentAssessment.interviewer}`, 20, 42);
+  doc.text(`Tanggal: ${currentAssessment.date}`, 20, 48);
+
+  // Tabel Skor
+  doc.autoTable({
+    startY: 60,
+    head: [['Kategori', 'Skor', 'Bobot', 'Skor Terbobot']],
+    body: Object.entries(currentAssessment.scores).map(([kategori, skor]) => [
+      kategori,
+      skor,
+      `${(weights[currentAssessment.role][currentAssessment.level][kategori] * 100}%`,
+      (skor * weights[currentAssessment.role][currentAssessment.level][kategori] * 10).toFixed(2)
+    ])
+  });
+
+  doc.save(`Hasil_Assessment_${currentAssessment.candidate}.pdf`);
+}
 // Fungsi untuk menyimpan riwayat (tambahkan implementasi)
 function saveToHistory() {
   // Implementasi penyimpanan riwayat ke localStorage atau lainnya
