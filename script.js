@@ -237,7 +237,12 @@ function saveToHistory() {
   // Implementasi penyimpanan riwayat ke localStorage atau lainnya
 }
 function exportToPDF() {
-  const { date, interviewer, role, candidate, level, scores, total, status } = currentAssessment;
+  if (!window.currentAssessment) {
+    alert("Data assessment tidak ditemukan.");
+    return;
+  }
+
+  const { date, interviewer, role, candidate, level, scores, total, status } = window.currentAssessment;
 
   const doc = new jspdf.jsPDF();
   doc.setFontSize(14);
@@ -262,6 +267,7 @@ function exportToPDF() {
 
   doc.save(`Assessment_${candidate}.pdf`);
 }
+
 
 // Panggil saat klik tab riwayat
 function showTab(tabId) {
