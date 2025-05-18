@@ -236,3 +236,74 @@ function renderChart() {
 function saveToHistory() {
   // Implementasi penyimpanan riwayat ke localStorage atau lainnya
 }
+function exportToPDF() {
+  const { date, interviewer, role, candidate, level, scores, total, status } = currentAssessment;
+
+  const doc = new jspdf.jsPDF();
+  doc.setFontSize(14);
+  doc.text(`Hasil Assessment Kandidat`, 20, 20);
+  doc.setFontSize(12);
+  doc.text(`Tanggal: ${date}`, 20, 30);
+  doc.text(`Interviewer: ${interviewer} (${role})`, 20, 40);
+  doc.text(`Kandidat: ${candidate} (${level})`, 20, 50);
+
+  let y = 65;
+  doc.text("Detail Skor:", 20, y);
+  y += 10;
+  for (const [category, score] of Object.entries(scores)) {
+    doc.text(`${category}: ${score}`, 30, y);
+    y += 8;
+  }
+
+  y += 5;
+  doc.text(`Total Skor: ${total}`, 20, y);
+  y += 10;
+  doc.text(`Status: ${status}`, 20, y);
+
+  doc.save(`Assessment_${candidate}.pdf`);
+}
+
+// Panggil saat klik tab riwayat
+function showTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active'));
+  
+  document.getElementById(tabId).classList.add('active');
+  document.querySelector(`.tab-link[onclick="showTab('${tabId}')"]`).classList.add('active');
+
+  if (tabId === 'history') {
+    fetchHistory();
+  }
+}
+
+// Ambil data dari Google Sheets (GET method)
+async function fetchHistory() {
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = 'Memuat...';
+
+  try {
+    const response = await fetch(scriptURL);
+    const data = await response.json();
+    
+    if (Array.isArray(data)) {
+      historyList.innerHTML = '';
+      data.reverse().forEach(row => {
+        const item = document.createElement('div');
+        item.classList.add('history-item');
+        item.innerHTML = `
+          <div>
+            <strong>${row.kandidat}</strong> - ${row.level}<br>
+            ${row.tanggal} oleh ${row.interviewer} (${row.role})<br>
+            Skor: ${row.total} - ${row.status}
+          </div>
+        `;
+        historyList.appendChild(item);
+      });
+    } else {
+      historyList.innerHTML = 'Gagal memuat data.';
+    }
+  } catch (err) {
+    console.error(err);
+    historyList.innerHTML = 'Terjadi kesalahan.';
+  }
+}
