@@ -1,5 +1,5 @@
 // Konfigurasi
-const scriptURL = 'https://script.google.com/macros/s/AKfycbwx7i8gUU1Tu8hQHmQSzdn6Wp89qroVkoZsKHjU4zIhOiaqj4_gMP1RIXMTxq3m0DsR/exec';
+const scriptURL = 'https://script.google.com/macros/library/d/1JZrWWJ6EM14JcEUtKkN9UiEGwIy2U_tH-3D-bOPd0YpuejROhOu_EIlK/11';
 
 const weights = {
   HR: {
