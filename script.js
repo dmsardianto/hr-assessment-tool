@@ -68,34 +68,20 @@ const weights = {
 let radarChart = null;
 let currentAssessment = {};
 
-/ Inisialisasi
 document.addEventListener('DOMContentLoaded', () => {
+  // Inisialisasi tanggal
   document.getElementById('interviewDate').value = new Date().toISOString().split('T')[0];
   
-  // Panggil updateForm saat role/level berubah
-  document.getElementById('interviewerRole').addEventListener('change', function() {
-    updateForm();
-    attachInputListeners(); // Tambahkan ini
-  });
+  // Event listeners untuk update form
+  document.getElementById('interviewerRole').addEventListener('change', updateForm);
+  document.getElementById('candidateLevel').addEventListener('change', updateForm);
   
-  document.getElementById('candidateLevel').addEventListener('change', function() {
-    updateForm();
-    attachInputListeners(); // Tambahkan ini
-  });
-  
+  // Event listener submit form
   document.getElementById('assessmentForm').addEventListener('submit', handleSubmit);
+  
+  // Inisialisasi pertama
+  updateForm();
 });
-
-// Fungsi untuk attach event listener ke input skor
-function attachInputListeners() {
-  document.querySelectorAll('#scoreSection input').forEach(input => {
-    input.addEventListener('input', function() {
-      // Validasi input
-      if (this.value < 1) this.value = 1;
-      if (this.value > 10) this.value = 10;
-    });
-  });
-}
 
 function updateForm() {
   const role = document.getElementById('interviewerRole').value;
@@ -106,7 +92,7 @@ function updateForm() {
   
   if (weights[role] && weights[role][level]) {
     Object.entries(weights[role][level]).forEach(([category, weight]) => {
-      const inputId = category.replace(/\s+/g, '-'); // Ganti spasi dengan dash
+      const inputId = category.replace(/[^a-z0-9]/gi, '-').toLowerCase();
       section.innerHTML += `
         <div class="form-group">
           <label for="${inputId}">${category} (${(weight * 100).toFixed(0)}%)</label>
@@ -121,22 +107,29 @@ function updateForm() {
       `;
     });
     
-    attachInputListeners(); // Pasang listener setelah form diupdate
+    // Tambahkan event listener ke input
+    document.querySelectorAll('.score-input').forEach(input => {
+      input.addEventListener('input', function() {
+        if (this.value < 1) this.value = 1;
+        if (this.value > 10) this.value = 10;
+      });
+    });
   }
 }
-
 
 async function handleSubmit(e) {
   e.preventDefault();
   
-  // Validasi form
+  // Validasi role dan level
   const role = document.getElementById('interviewerRole').value;
   const level = document.getElementById('candidateLevel').value;
+  
   if (!role || !level) {
     alert('Pilih Role dan Level terlebih dahulu!');
     return;
   }
 
+  // Kumpulkan data
   const assessment = {
     date: document.getElementById('interviewDate').value,
     interviewer: document.getElementById('interviewerName').value,
@@ -148,7 +141,7 @@ async function handleSubmit(e) {
 
   // Validasi input skor
   let isValid = true;
-  document.querySelectorAll('#scoreSection input').forEach(input => {
+  document.querySelectorAll('.score-input').forEach(input => {
     const value = parseFloat(input.value);
     if (isNaN(value) || value < 1 || value > 10) {
       isValid = false;
@@ -163,9 +156,9 @@ async function handleSubmit(e) {
     return;
   }
 
-  // Hitung skor
+  // Hitung total skor
   let total = 0;
-  document.querySelectorAll('#scoreSection input').forEach(input => {
+  document.querySelectorAll('.score-input').forEach(input => {
     const category = input.dataset.category;
     const score = parseFloat(input.value);
     const weight = weights[assessment.role][assessment.level][category];
@@ -186,10 +179,11 @@ async function handleSubmit(e) {
   
   // Kirim ke Google Sheets
   try {
-    const response = await fetch(scriptURL, {
+    const response = await fetch(`${scriptURL}?redirect=please`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
         tanggal: currentAssessment.date,
@@ -202,49 +196,26 @@ async function handleSubmit(e) {
       })
     });
 
-    if (!response.ok) throw new Error('Gagal menyimpan data');
+    if (!response.ok) throw new Error(`Gagal menyimpan: ${response.statusText}`);
     
     const result = await response.json();
     console.log('Sukses:', result);
+    alert('Data tersimpan ke Google Sheet!');
     
   } catch (error) {
     console.error('Error:', error);
-    // Fallback ke metode GET jika POST gagal
-    await submitToGoogleSheets({
-      tanggal: currentAssessment.date,
-      interviewer: currentAssessment.interviewer,
-      role: currentAssessment.role,
-      kandidat: currentAssessment.candidate,
-      level: currentAssessment.level,
-      total: currentAssessment.total,
-      status: currentAssessment.status
-    });
-  }
-}
-
-// Ubah metode POST menjadi GET dengan parameter URL
-async function submitToGoogleSheets(data) {
-  const params = new URLSearchParams(data).toString();
-  const urlWithParams = `${scriptURL}?${params}`;
-  
-  try {
-    const response = await fetch(urlWithParams, {
-      method: 'GET', // Ganti ke GET
-      mode: 'no-cors'
-    });
-    
-    console.log('Data terkirim ke Google Sheet');
-  } catch (error) {
-    console.error('Error:', error);
+    alert('Gagal menyimpan. Silakan coba lagi atau cek koneksi internet!');
   }
 }
 
 function showResult() {
-  document.getElementById('resultContainer').classList.remove('hidden');
+  const resultContainer = document.getElementById('resultContainer');
+  resultContainer.classList.remove('hidden');
   document.getElementById('finalScore').textContent = currentAssessment.total;
   document.getElementById('resultStatus').textContent = currentAssessment.status;
   
   renderChart();
+  resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 function renderChart() {
@@ -273,28 +244,14 @@ function renderChart() {
           ticks: {
             stepSize: 1,
             showLabelBackdrop: false,
-            callback: function(value) {
-              return value % 1 === 0 ? value : null;
-            }
+            callback: value => Number.isInteger(value) ? value : null
           },
-          angleLines: {
-            color: 'rgba(0, 0, 0, 0.1)'
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          },
-          pointLabels: {
-            font: {
-              size: 12
-            }
-          }
+          angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+          grid: { color: 'rgba(0, 0, 0, 0.05)' },
+          pointLabels: { font: { size: 12 } }
         }
       },
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
+      plugins: { legend: { display: false } }
     }
   });
 }
@@ -302,33 +259,32 @@ function renderChart() {
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-
+  
   // Header
   doc.setFontSize(18);
-  doc.text("Hasil Assessment Kandidat", 105, 20, { align: 'center' });
-
-  // Data Kandidat
+  doc.text("Laporan Hasil Assessment", 105, 20, { align: 'center' });
+  
+  // Informasi kandidat
   doc.setFontSize(12);
   doc.text(`Nama Kandidat: ${currentAssessment.candidate}`, 20, 30);
   doc.text(`Level: ${currentAssessment.level}`, 20, 36);
   doc.text(`Interviewer: ${currentAssessment.interviewer}`, 20, 42);
   doc.text(`Tanggal: ${currentAssessment.date}`, 20, 48);
-
-  // Tabel Skor
+  
+  // Tabel skor
   doc.autoTable({
     startY: 60,
     head: [['Kategori', 'Skor', 'Bobot', 'Skor Terbobot']],
     body: Object.entries(currentAssessment.scores).map(([kategori, skor]) => [
       kategori,
       skor,
-      `${(weights[currentAssessment.role][currentAssessment.level][kategori] * 100}%`,
+      `${(weights[currentAssessment.role][currentAssessment.level][kategori] * 100).toFixed(0)}%`,
       (skor * weights[currentAssessment.role][currentAssessment.level][kategori] * 10).toFixed(2)
-    ])
+    ]),
+    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+    alternateRowStyles: { fillColor: [245, 245, 245] }
   });
 
+  // Simpan PDF
   doc.save(`Hasil_Assessment_${currentAssessment.candidate}.pdf`);
-}
-// Fungsi untuk menyimpan riwayat (tambahkan implementasi)
-function saveToHistory() {
-  // Implementasi penyimpanan riwayat ke localStorage atau lainnya
 }
