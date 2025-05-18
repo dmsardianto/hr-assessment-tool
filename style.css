@@ -103,3 +103,21 @@ button:hover {
   justify-content: space-between;
   align-items: center;
 }
+
+/* Style untuk input error */
+.score-input.error {
+  border-color: #ff0000;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+/* Loading indicator */
+.loading {
+  display: none;
+  margin: 10px 0;
+  color: #3498db;
+}
+
+/* Hasil assessment */
+#resultContainer {
+  transition: all 0.3s ease;
+}
