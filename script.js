@@ -1,5 +1,5 @@
 // Konfigurasi
-const scriptURL = 'https://script.google.com/macros/s/AKfycbwC3bnRj7PUZtvj0fLSW5PD_6oTj9bsFKX2eXeE09lA3d5Q0Yurv7ypXy7x19gcH2Tr/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwDKUjSdNAlELUqrjHD-a7cy122m8av7E37hSInugQAHGTyfZBDWbW94-E3QPVKaqkc/exec';
 
 const weights = {
   HR: {
@@ -68,13 +68,34 @@ const weights = {
 let radarChart = null;
 let currentAssessment = {};
 
-// Inisialisasi
+/ Inisialisasi
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('interviewDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('interviewerRole').addEventListener('change', updateForm);
-  document.getElementById('candidateLevel').addEventListener('change', updateForm);
+  
+  // Panggil updateForm saat role/level berubah
+  document.getElementById('interviewerRole').addEventListener('change', function() {
+    updateForm();
+    attachInputListeners(); // Tambahkan ini
+  });
+  
+  document.getElementById('candidateLevel').addEventListener('change', function() {
+    updateForm();
+    attachInputListeners(); // Tambahkan ini
+  });
+  
   document.getElementById('assessmentForm').addEventListener('submit', handleSubmit);
 });
+
+// Fungsi untuk attach event listener ke input skor
+function attachInputListeners() {
+  document.querySelectorAll('#scoreSection input').forEach(input => {
+    input.addEventListener('input', function() {
+      // Validasi input
+      if (this.value < 1) this.value = 1;
+      if (this.value > 10) this.value = 10;
+    });
+  });
+}
 
 function updateForm() {
   const role = document.getElementById('interviewerRole').value;
@@ -83,33 +104,64 @@ function updateForm() {
   
   section.innerHTML = '';
   
-  if (weights[role]?.[level]) {
+  if (weights[role] && weights[role][level]) {
     Object.entries(weights[role][level]).forEach(([category, weight]) => {
+      const inputId = category.replace(/\s+/g, '-'); // Ganti spasi dengan dash
       section.innerHTML += `
         <div class="form-group">
-          <label>${category} (${(weight * 100).toFixed(0)}%)</label>
+          <label for="${inputId}">${category} (${(weight * 100).toFixed(0)}%)</label>
           <input type="number" 
+                 id="${inputId}"
                  min="1" 
                  max="10" 
                  data-category="${category}" 
-                 required>
+                 required
+                 class="score-input">
         </div>
       `;
     });
+    
+    attachInputListeners(); // Pasang listener setelah form diupdate
   }
 }
+
 
 async function handleSubmit(e) {
   e.preventDefault();
   
+  // Validasi form
+  const role = document.getElementById('interviewerRole').value;
+  const level = document.getElementById('candidateLevel').value;
+  if (!role || !level) {
+    alert('Pilih Role dan Level terlebih dahulu!');
+    return;
+  }
+
   const assessment = {
     date: document.getElementById('interviewDate').value,
     interviewer: document.getElementById('interviewerName').value,
-    role: document.getElementById('interviewerRole').value,
+    role: role,
     candidate: document.getElementById('candidateName').value,
-    level: document.getElementById('candidateLevel').value,
+    level: level,
     scores: {}
   };
+
+  // Validasi input skor
+  let isValid = true;
+  document.querySelectorAll('#scoreSection input').forEach(input => {
+    const value = parseFloat(input.value);
+    if (isNaN(value) || value < 1 || value > 10) {
+      isValid = false;
+      input.classList.add('error');
+    } else {
+      input.classList.remove('error');
+    }
+  });
+
+  if (!isValid) {
+    alert('Semua skor harus diisi dengan angka 1-10!');
+    return;
+  }
 
   // Hitung skor
   let total = 0;
@@ -132,6 +184,7 @@ async function handleSubmit(e) {
   // Tampilkan hasil
   showResult();
   
+  // Kirim ke Google Sheets
   try {
     const response = await fetch(scriptURL, {
       method: 'POST',
@@ -153,11 +206,19 @@ async function handleSubmit(e) {
     
     const result = await response.json();
     console.log('Sukses:', result);
-    alert('Data tersimpan!');
     
   } catch (error) {
     console.error('Error:', error);
-    alert(`Error: ${error.message}`);
+    // Fallback ke metode GET jika POST gagal
+    await submitToGoogleSheets({
+      tanggal: currentAssessment.date,
+      interviewer: currentAssessment.interviewer,
+      role: currentAssessment.role,
+      kandidat: currentAssessment.candidate,
+      level: currentAssessment.level,
+      total: currentAssessment.total,
+      status: currentAssessment.status
+    });
   }
 }
 
